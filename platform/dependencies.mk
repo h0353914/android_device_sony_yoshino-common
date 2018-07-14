@@ -99,7 +99,6 @@ PRODUCT_PACKAGES += \
     libminijail \
     libstdc++_vendor \
     libtinyxml \
-    libxml2 \
     libnetutils.vendor \
     libion.vendor \
     libutilscallstack.vendor \
