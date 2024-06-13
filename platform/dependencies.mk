@@ -45,7 +45,8 @@ PRODUCT_PACKAGES += \
     libhidltransport \
     libhidltransport.vendor \
     libhwbinder \
-    libhwbinder.vendor
+    libhwbinder.vendor \
+    libhidlmemory.vendor
 
 ### IMS
 PRODUCT_PACKAGES += \
@@ -74,7 +75,8 @@ PRODUCT_PACKAGES += \
     libOmxVenc \
     libc2dcolorconvert \
     libmm-omxcore \
-    libstagefrighthw
+    libstagefrighthw \
+    libstagefright_softomx_plugin.vendor
 
 # PROTOBUF
 PRODUCT_PACKAGES += \
@@ -95,7 +97,13 @@ PRODUCT_PACKAGES += \
     libminijail \
     libstdc++_vendor \
     libtinyxml \
-    libxml2
+    libxml2 \
+    libnetutils.vendor \
+    libion.vendor \
+    libutilscallstack.vendor \
+    libsqlite.vendor \
+    libprocessgroup.vendor \
+    librtp_jni
 
 ### TELEPHONY
 PRODUCT_PACKAGES += \
@@ -107,10 +115,6 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_BOOT_JARS += \
     telephony-ext
-
-### VNDK
-PRODUCT_PACKAGES += \
-    vndk_package
 
 # VNDFWK_DETECT
 PRODUCT_PACKAGES += \
