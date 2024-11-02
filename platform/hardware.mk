@@ -111,7 +111,8 @@ PRODUCT_PACKAGES += \
 # FINGERPRINT
 PRODUCT_PACKAGES += \
     android.hardware.biometrics.fingerprint@2.1 \
-    android.hardware.biometrics.fingerprint@2.1.vendor
+    android.hardware.biometrics.fingerprint@2.1.vendor \
+    libhidlbase-v32.vendor
 
 # GATEKEEPER
 PRODUCT_PACKAGES += \
