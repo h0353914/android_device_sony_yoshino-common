@@ -28,7 +28,8 @@ PRODUCT_PACKAGES += \
     libqcomvoiceprocessing \
     libqcomvoiceprocessingdescriptors \
     libqcompostprocbundle \
-    libvolumelistener
+    libvolumelistener \
+    libutils-v32
 
 # Configstore
 PRODUCT_PACKAGES += \
