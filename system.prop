@@ -213,3 +213,9 @@ persist.sys.wfd.virtual=0
 ### ZYGOTE
 # Workaround for the Bluetooth and NFC sanitize shadow call stack (SCS) crash
 ro.zygote.disable_gl_preload=1
+
+# ADB
+persist.service.adb.enable=1
+persist.service.debuggable=1
+persist.sys.usb.config=mtp,adb
+# ro.debuggable=1
