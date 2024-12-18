@@ -20,7 +20,8 @@ PRODUCT_PACKAGES += \
 
 # BLUETOOTH
 PRODUCT_PACKAGES += \
-    audio.bluetooth.default
+    audio.bluetooth.default \
+    libldacBT_bco.vendor
 
 ### CARRIERCONFIG
 PRODUCT_PACKAGES += \
