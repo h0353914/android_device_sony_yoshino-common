@@ -21,6 +21,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/non_ab_device.mk)
 ### PROPRIETARY VENDOR FILES
 $(call inherit-product, vendor/sony/yoshino-common/yoshino-common-vendor.mk)
 
+# Camera
+$(call inherit-product-if-exists, vendor/sony/camera/sony-camera.mk)
+
 PRODUCT_SOONG_NAMESPACES += \
     $(PLATFORM_PATH) \
     hardware/google/interfaces \
