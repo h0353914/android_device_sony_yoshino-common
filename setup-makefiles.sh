@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-# Copyright (C) 2016 The CyanogenMod Project
-# Copyright (C) 2017-2020 The LineageOS Project
-#
+# SPDX-FileCopyrightText: 2016 The CyanogenMod Project
+# SPDX-FileCopyrightText: 2017-2025 The LineageOS Project
 # SPDX-License-Identifier: Apache-2.0
 #
 
 set -e
 
-DEVICE_COMMON=yoshino-common
-VENDOR=sony
+export DEVICE_COMMON=yoshino-common
+export VENDOR=sony
+export VENDOR_COMMON=${VENDOR}
 
 # Load extract_utils and do some sanity checks
 MY_DIR="${BASH_SOURCE%/*}"
@@ -24,14 +24,39 @@ if [ ! -f "${HELPER}" ]; then
 fi
 source "${HELPER}"
 
-# Initialize the helper
-setup_vendor "${DEVICE_COMMON}" "${VENDOR}" "${ANDROID_ROOT}" true
+# Initialize the helper for common
+setup_vendor "${DEVICE_COMMON}" "${VENDOR_COMMON:-$VENDOR}" "${ANDROID_ROOT}" true
 
 # Warning headers and guards
 write_headers "lilac maple maple_dsds poplar poplar_canada poplar_dsds poplar_kddi"
 
-write_makefiles "${MY_DIR}"/proprietary-files.txt true
-write_makefiles "${MY_DIR}"/proprietary-files-vendor.txt true
+# The standard common blobs
+write_makefiles "${MY_DIR}/proprietary-files.txt"
 
 # Finish
 write_footers
+
+if [ -s "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" ]; then
+    # Reinitialize the helper for device
+    source "${MY_DIR}/../../${VENDOR}/${DEVICE}/setup-makefiles.sh"
+    setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false
+
+    # Warning headers and guards
+    write_headers
+
+    # The standard device blobs
+    write_makefiles "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt"
+
+    if [ -f "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files-carriersettings.txt" ]; then
+        write_makefiles "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files-carriersettings.txt"
+        write_rro_package "CarrierConfigOverlay" "com.android.carrierconfig" product
+        write_single_product_packages "CarrierConfigOverlay"
+    fi
+
+    if [ -f "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt" ]; then
+        append_firmware_calls_to_makefiles "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt"
+    fi
+
+    # Finish
+    write_footers
+fi

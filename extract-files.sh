@@ -1,21 +1,25 @@
 #!/bin/bash
 #
-# Copyright (C) 2016 The CyanogenMod Project
-# Copyright (C) 2017-2020 The LineageOS Project
-#
+# SPDX-FileCopyrightText: 2016 The CyanogenMod Project
+# SPDX-FileCopyrightText: 2017-2025 The LineageOS Project
 # SPDX-License-Identifier: Apache-2.0
 #
 
 set -e
 
-DEVICE_COMMON=yoshino-common
-VENDOR=sony
+export DEVICE_COMMON=yoshino-common
+export VENDOR=sony
+export VENDOR_COMMON=${VENDOR}
 
 # Load extract_utils and do some sanity checks
 MY_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
 
 ANDROID_ROOT="${MY_DIR}/../../.."
+
+# If XML files don't have comments before the XML header, use this flag
+# Can still be used with broken XML files by using blob_fixup
+export TARGET_DISABLE_XML_FIXING=true
 
 HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
 if [ ! -f "${HELPER}" ]; then
@@ -27,24 +31,38 @@ source "${HELPER}"
 # Default to sanitizing the vendor folder before extraction
 CLEAN_VENDOR=true
 
+ONLY_COMMON=
+ONLY_FIRMWARE=
+ONLY_TARGET=
 KANG=
 SECTION=
+CARRIER_SKIP_FILES=()
 
 while [ "${#}" -gt 0 ]; do
     case "${1}" in
-        -n | --no-cleanup )
-                CLEAN_VENDOR=false
-                ;;
-        -k | --kang )
-                KANG="--kang"
-                ;;
-        -s | --section )
-                SECTION="${2}"; shift
-                CLEAN_VENDOR=false
-                ;;
-        * )
-                SRC="${1}"
-                ;;
+        --only-common)
+            ONLY_COMMON=true
+            ;;
+        --only-firmware)
+            ONLY_FIRMWARE=true
+            ;;
+        --only-target)
+            ONLY_TARGET=true
+            ;;
+        -n | --no-cleanup)
+            CLEAN_VENDOR=false
+            ;;
+        -k | --kang)
+            KANG="--kang"
+            ;;
+        -s | --section)
+            SECTION="${2}"
+            shift
+            CLEAN_VENDOR=false
+            ;;
+        *)
+            SRC="${1}"
+            ;;
     esac
     shift
 done
@@ -53,101 +71,159 @@ if [ -z "${SRC}" ]; then
     SRC="adb"
 fi
 
+function blob_fixup() {
+    case "${1}" in
+        vendor/bin/ffu)
+            [ "$2" = "" ] && return 0
+            sed -i 's|/lib/firmware/ufs|/etc/firmware/ufs|g' "$2"
+            ;;
+        product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml | \
+            product/etc/permissions/vendor.qti.hardware.data.connection-V1.1-java.xml)
+            [ "$2" = "" ] && return 0
+            sed -i 's/version\="2\.0"/version\="1\.0"/g' "$2"
+            ;;
+        vendor/etc/init/taimport_vendor.rc)
+            [ "$2" = "" ] && return 0
+            if ! grep -q "restorecon /persist/wlan" "$2"; then
+                sed -i '4 a\    restorecon /persist/wlan' "$2"
+            fi
+            ;;
+        system_ext/lib64/lib-imsvideocodec.so)
+            [ "$2" = "" ] && return 0
+            if ! "${PATCHELF}" --print-needed "$2" | grep -q "libgui_shim.so"; then
+                "${PATCHELF}" --add-needed "libgui_shim.so" "$2"
+            fi
+            ;;
+        system/lib/libjni_imageutil.so | \
+            system/lib/libjni_snapcammosaic.so | \
+            system/lib/libjni_snapcamtinyplanet.so | \
+            system/lib64/libseemore.so)
+            [ "$2" = "" ] && return 0
+            "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "$2"
+            ;;
+        system/lib/libseemore.so | \
+            vendor/lib/libsomc_alfortlp.so | \
+            vendor/lib/libsomc_alfortlpserv.so | \
+            vendor/lib/libsomc_alfortrsc.so | \
+            vendor/lib/libsomc_bordeauxrsc.so | \
+            vendor/lib/libsomc_buttercakersc.so | \
+            vendor/lib/libsomc_canelersc.so | \
+            vendor/lib/libsomc_cheesesconersc.so | \
+            vendor/lib/libsomc_dars.so | \
+            vendor/lib/libsomc_darsrsc.so | \
+            vendor/lib/libsomc_marblersc.so | \
+            vendor/lib/libsomc_melonpanrsc.so | \
+            vendor/lib/libsomc_mugichocorsc.so | \
+            vendor/lib/libsomc_pretzchocorsc.so | \
+            vendor/lib/libsomc_raisinrsc.so | \
+            vendor/lib/libsomc_shortcakersc.so | \
+            vendor/lib/libsomc_spicarsc.so | \
+            vendor/lib/libsomc_sumomolpserv.so | \
+            vendor/lib/libsomc_sumomorsc.so | \
+            vendor/lib/libsomc_topporsc.so | \
+            vendor/lib/libsomc_yummyrsc.so | \
+            vendor/lib/libsony_fooddetect.so | \
+            vendor/lib/libsony_naruto.so)
+            [ "$2" = "" ] && return 0
+            "${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "$2"
+            ;;
+        system/bin/sony-modem-switcher)
+            [ "$2" = "" ] && return 0
+            "${PATCHELF_0_17_2}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "$2"
+            ;;
+        system/lib/com.qualcomm.qti.ant@1.0.so | \
+            system/lib/com.qualcomm.qti.bluetooth_audio@1.0.so | \
+            system/lib/libMiscTaWrapper.so | \
+            system/lib/vendor.qti.hardware.qteeconnector@1.0.so | \
+            system/lib/vendor.qti.hardware.tui_comm@1.0.so | \
+            system/lib/vendor.qti.hardware.vpp@1.1.so | \
+            system/lib/vendor.semc.hardware.light@1.0.so | \
+            system/lib/vendor.semc.system.idd@1.0.so | \
+            system/lib/vendor.somc.hardware.camera.cacao@1.0.so | \
+            system/lib/vendor.somc.hardware.camera.cacao@2.0.so | \
+            system/lib/vendor.somc.hardware.camera.cacao@3.0.so | \
+            system/lib/vendor.somc.hardware.camera.cacao@3.1.so | \
+            system/lib/vendor.somc.hardware.camera.device@1.0.so | \
+            system/lib/vendor.somc.hardware.camera.provider@1.0.so | \
+            system/lib64/com.qualcomm.qti.ant@1.0.so | \
+            system/lib64/com.qualcomm.qti.bluetooth_audio@1.0.so | \
+            system/lib64/libMiscTaWrapper.so | \
+            system/lib64/vendor.display.color@1.0.so | \
+            system/lib64/vendor.display.color@1.1.so | \
+            system/lib64/vendor.display.color@1.2.so | \
+            system/lib64/vendor.display.postproc@1.0.so | \
+            system/lib64/vendor.qti.esepowermanager@1.0.so | \
+            system/lib64/vendor.qti.hardware.qdutils_disp@1.0.so | \
+            system/lib64/vendor.qti.hardware.qteeconnector@1.0.so | \
+            system/lib64/vendor.qti.hardware.tui_comm@1.0.so | \
+            system/lib64/vendor.qti.hardware.vpp@1.1.so | \
+            system/lib64/vendor.semc.hardware.light@1.0.so | \
+            system/lib64/vendor.semc.system.idd@1.0.so | \
+            system/lib64/vendor.somc.hardware.security.secd@1.0.so)
+            [ "$2" = "" ] && return 0
+            "${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "$2"
+            ;;
+        vendor/etc/init/android.hardware.drm@1.1-service.widevine.rc)
+            [ "$2" = "" ] && return 0
+            sed -i 's|writepid /dev/cpuset/foreground/tasks|task_profiles ProcessCapacityHigh|g' "$2"
+            ;;
+        vendor/etc/init/init.illumination_service.rc | \
+            vendor/etc/init/init.touchbacklightd.rc)
+            [ "$2" = "" ] && return 0
+            sed -i 's|writepid /dev/cpuset/system-background/tasks|task_profiles ServiceCapacityLow|g' "$2"
+            ;;
+        vendor/etc/init/vendor.somc.hardware.camera.provider@1.0-service.rc)
+            [ "$2" = "" ] && return 0
+            sed -i 's|writepid /dev/cpuset/camera-daemon/tasks /dev/stune/top-app/tasks|task_profiles CameraServiceCapacity MaxPerformance|g' "$2"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 
-# Initialize the helper
-setup_vendor "${DEVICE_COMMON}" "${VENDOR}" "${ANDROID_ROOT}" true "${CLEAN_VENDOR}"
+    return 0
+}
 
-extract "${MY_DIR}/proprietary-files.txt" "${SRC}" "${KANG}" --section "${SECTION}"
-extract "${MY_DIR}/proprietary-files-vendor.txt" "${SRC}" "${KANG}" --section "${SECTION}"
+function blob_fixup_dry() {
+    blob_fixup "$1" ""
+}
 
-#
-# Blobs fixup start
-#
+function prepare_firmware() {
+    if [ "${SRC}" != "adb" ]; then
+        local STAR="${ANDROID_ROOT}"/lineage/scripts/motorola/star.sh
+        for IMAGE in bootloader radio; do
+            if [ -f "${SRC}/${IMAGE}.img" ]; then
+                echo "Extracting Motorola star image ${SRC}/${IMAGE}.img"
+                sh "${STAR}" "${SRC}/${IMAGE}.img" "${SRC}"
+            fi
+        done
+    fi
+}
 
-DEVICE_COMMON_ROOT="${ANDROID_ROOT}"/vendor/"${VENDOR}"/"${DEVICE_COMMON}"/proprietary
+if [ -z "${ONLY_FIRMWARE}" ] && [ -z "${ONLY_TARGET}" ]; then
+    # Initialize the helper for common device
+    setup_vendor "${DEVICE_COMMON}" "${VENDOR_COMMON:-$VENDOR}" "${ANDROID_ROOT}" true "${CLEAN_VENDOR}"
+    extract "${MY_DIR}/proprietary-files.txt" "${SRC}" "${KANG}" --section "${SECTION}"
+fi
 
-# Let ffu load ufs firmare files from /etc
-sed -i 's/\/lib\/firmware\/ufs/\/etc\/firmware\/ufs/g' "${DEVICE_COMMON_ROOT}"/vendor/bin/ffu
+if [ -z "${ONLY_COMMON}" ] && [ -s "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" ]; then
+    # Reinitialize the helper for device
+    source "${MY_DIR}/../../${VENDOR}/${DEVICE}/extract-files.sh"
+    setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false "${CLEAN_VENDOR}"
 
-# Change xml version from 2.0 to 1.0
-sed -i 's/version\=\"2\.0\"/version\=\"1\.0\"/g' "${DEVICE_COMMON_ROOT}"/product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml
-sed -i 's/version\=\"2\.0\"/version\=\"1\.0\"/g' "${DEVICE_COMMON_ROOT}"/product/etc/permissions/vendor.qti.hardware.data.connection-V1.1-java.xml
+    if [ -z "${ONLY_FIRMWARE}" ]; then
+        extract "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" "${SRC}" "${KANG}" --section "${SECTION}"
 
-# Add a restorecon for /persist/wlan to taimport_vendor.rc
-grep -q "restorecon /persist/wlan" "${DEVICE_COMMON_ROOT}"/vendor/etc/init/taimport_vendor.rc || sed -i '4 a\    restorecon /persist/wlan' "${DEVICE_COMMON_ROOT}"/vendor/etc/init/taimport_vendor.rc
+        if [ -f "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files-carriersettings.txt" ]; then
+            generate_prop_list_from_image "product.img" "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files-carriersettings.txt" CARRIER_SKIP_FILES carriersettings
+            extract "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files-carriersettings.txt" "${SRC}" "${KANG}" --section "${SECTION}"
+            extract_carriersettings
+        fi
+    fi
 
-# Patch lib-imsvideocodec.so to load libgui_shim.so
-grep -q "libgui_shim.so" "${DEVICE_COMMON_ROOT}"/system_ext/lib64/lib-imsvideocodec.so || "${PATCHELF}" --add-needed "libgui_shim.so" "${DEVICE_COMMON_ROOT}"/system_ext/lib64/lib-imsvideocodec.so
+    if [ -z "${SECTION}" ] && [ -f "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt" ]; then
+        extract_firmware "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt" "${SRC}"
+    fi
+fi
 
-# Replace libstdc++.so with libstdc++_vendor.so
-"${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/lib/libjni_imageutil.so
-"${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/lib/libjni_snapcammosaic.so
-"${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/lib/libjni_snapcamtinyplanet.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/lib/libseemore.so
-"${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/lib64/libseemore.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_alfortlp.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_alfortlpserv.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_alfortrsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_bordeauxrsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_buttercakersc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_canelersc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_cheesesconersc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_dars.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_darsrsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_marblersc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_melonpanrsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_mugichocorsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_pretzchocorsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_raisinrsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_shortcakersc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_spicarsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_sumomolpserv.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_sumomorsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_topporsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsomc_yummyrsc.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsony_fooddetect.so
-"${PATCHELF_0_17_2}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${DEVICE_COMMON_ROOT}"/vendor/lib/libsony_naruto.so
-
-# Use libhidlbase-v32 for select Android P blobs
-"${PATCHELF_0_17_2}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/bin/sony-modem-switcher
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/com.qualcomm.qti.ant@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/com.qualcomm.qti.bluetooth_audio@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/libMiscTaWrapper.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.qti.hardware.qteeconnector@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.qti.hardware.tui_comm@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.qti.hardware.vpp@1.1.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.semc.hardware.light@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.semc.system.idd@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.somc.hardware.camera.cacao@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.somc.hardware.camera.cacao@2.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.somc.hardware.camera.cacao@3.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.somc.hardware.camera.cacao@3.1.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.somc.hardware.camera.device@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib/vendor.somc.hardware.camera.provider@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/com.qualcomm.qti.ant@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/com.qualcomm.qti.bluetooth_audio@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/libMiscTaWrapper.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.display.color@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.display.color@1.1.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.display.color@1.2.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.display.postproc@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.qti.esepowermanager@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.qti.hardware.qdutils_disp@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.qti.hardware.qteeconnector@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.qti.hardware.tui_comm@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.qti.hardware.vpp@1.1.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.semc.hardware.light@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.semc.system.idd@1.0.so
-"${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${DEVICE_COMMON_ROOT}"/lib64/vendor.somc.hardware.security.secd@1.0.so
-
-# Replace writepid with task_profiles command for cgroup migration
-sed -i 's/writepid\ \/dev\/cpuset\/foreground\/tasks/task_profiles\ ProcessCapacityHigh/g' "${DEVICE_COMMON_ROOT}"/vendor/etc/init/android.hardware.drm@1.1-service.widevine.rc
-sed -i 's/writepid\ \/dev\/cpuset\/system-background\/tasks/task_profiles\ ServiceCapacityLow/g' "${DEVICE_COMMON_ROOT}"/vendor/etc/init/init.illumination_service.rc
-sed -i 's/writepid\ \/dev\/cpuset\/system-background\/tasks/task_profiles\ ServiceCapacityLow/g' "${DEVICE_COMMON_ROOT}"/vendor/etc/init/init.touchbacklightd.rc
-sed -i 's/writepid \/dev\/cpuset\/camera-daemon\/tasks\ \/dev\/stune\/top-app\/tasks/task_profiles\ CameraServiceCapacity\ MaxPerformance/g' "${DEVICE_COMMON_ROOT}"/vendor/etc/init/vendor.somc.hardware.camera.provider@1.0-service.rc
-
-#
-# Blobs fixup end
-#
-
-"${MY_DIR}"/setup-makefiles.sh
+"${MY_DIR}/setup-makefiles.sh"
