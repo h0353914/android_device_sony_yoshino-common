@@ -53,6 +53,10 @@ PRODUCT_PACKAGES += \
 
 $(call inherit-product-if-exists, vendor/sony/camera/sony-camera.mk)
 
+# OpenEUICC
+PRODUCT_PACKAGES += \
+    OpenEUICC
+
 # Configstore
 PRODUCT_PACKAGES += \
     disable_configstore
