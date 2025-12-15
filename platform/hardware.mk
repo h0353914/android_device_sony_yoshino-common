@@ -34,6 +34,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     FlipFlap
 
+### OpenEUICC
+PRODUCT_PACKAGES += \
+    OpenEUICC
+
 ### DISPLAY
 PRODUCT_PACKAGES += \
     vendor.display.config@1.3
