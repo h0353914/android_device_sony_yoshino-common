@@ -61,3 +61,14 @@ TARGET_USE_CUSTOM_POWERHINT ?= false
 
 ### RECOVERY
 include $(PLATFORM_PATH)/platform/*.mk
+
+### SemcCamera
+PRODUCT_PACKAGES += \
+    libcacao_client_real \
+    libcacao_client \
+    libcacao_service_real \
+    libcacao_service \
+    libimageprocessorjni_real \
+    libimageprocessorjni \
+    libcacao_process_ctrl_gateway_real \
+    libcacao_process_ctrl_gateway
