@@ -520,8 +520,8 @@ DisplayError HWPrimary::SetPanelBrightness(int level) {
   char buffer[kMaxSysfsCommandLength] = {0};
 
   // Clamp level
-  if (level < 1)
-    level = 1;
+  if (level < 0)
+    level = 0;
   else if (level > 4095)
     level = 4095;
 
