@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# Soong
+PRODUCT_SOONG_NAMESPACES += \
+    bootable/deprecated-ota
+
 # Update
 AB_OTA_UPDATER := false
 
