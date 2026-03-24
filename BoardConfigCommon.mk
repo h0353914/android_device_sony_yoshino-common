@@ -56,5 +56,8 @@ TARGET_BOARD_PLATFORM := msm8998
 # Treble
 TARGET_COPY_OUT_VENDOR := vendor
 
+# Vendor security patch
+VENDOR_SECURITY_PATCH := 2019-09-01
+
 # Inherit from the proprietary version
 include vendor/sony/yoshino-common/BoardConfigVendor.mk
