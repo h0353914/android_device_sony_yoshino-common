@@ -59,5 +59,9 @@ TARGET_COPY_OUT_VENDOR := vendor
 # Vendor security patch
 VENDOR_SECURITY_PATCH := 2019-09-01
 
+# Verity
+# Only needed for signing
+BOARD_AVB_ENABLE := false
+
 # Inherit from the proprietary version
 include vendor/sony/yoshino-common/BoardConfigVendor.mk
