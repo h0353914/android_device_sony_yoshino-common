@@ -6,6 +6,10 @@
 # Add common definitions for Qualcomm
 $(call inherit-product, hardware/qcom-caf/common/common.mk)
 
+# DRM
+PRODUCT_PACKAGES += \
+    android.hardware.drm-service.clearkey
+
 # Lights
 PRODUCT_PACKAGES += \
     android.hardware.light-service.lineage
