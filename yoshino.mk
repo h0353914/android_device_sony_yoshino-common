@@ -5,6 +5,7 @@
 
 # Soong
 PRODUCT_SOONG_NAMESPACES += \
+    $(LOCAL_PATH) \
     bootable/deprecated-ota
 
 # Update
