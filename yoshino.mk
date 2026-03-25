@@ -24,5 +24,10 @@ PRODUCT_SOONG_NAMESPACES += \
 # Update
 AB_OTA_UPDATER := false
 
+# WiFi firmware symlinks
+PRODUCT_PACKAGES += \
+    firmware_wlan_mac.bin_symlink \
+    firmware_WCNSS_qcom_cfg.ini_symlink
+
 # Inherit proprietary blobs
 $(call inherit-product, vendor/sony/yoshino-common/yoshino-common-vendor.mk)
