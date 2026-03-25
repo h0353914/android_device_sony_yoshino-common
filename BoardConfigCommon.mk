@@ -54,6 +54,7 @@ BOARD_USES_QCOM_HARDWARE := true
 TARGET_BOARD_PLATFORM := msm8998
 
 # SEPolicy
+include device/lineage/sepolicy/libperfmgr/sepolicy.mk
 include device/qcom/sepolicy-legacy-um/SEPolicy.mk
 
 # Treble
