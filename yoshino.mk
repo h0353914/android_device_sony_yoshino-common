@@ -6,6 +6,10 @@
 # Add common definitions for Qualcomm
 $(call inherit-product, hardware/qcom-caf/common/common.mk)
 
+# Lights
+PRODUCT_PACKAGES += \
+    android.hardware.light-service.lineage
+
 # Soong
 PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
