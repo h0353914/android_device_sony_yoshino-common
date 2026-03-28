@@ -169,16 +169,16 @@ system/lib/com.qualcomm.qti.bluetooth_audio@1.0.so
 system/lib64/com.qualcomm.qti.bluetooth_audio@1.0.so
 
 # CAMERA
-system/bin/cacaoserver
-system/etc/init/cacaoserver.rc
+system/lib/libcacao_client.so
 system/lib/libcacao_pal.so
+system/lib/libcacao_process_ctrl_gateway.so
+system/lib/libcacao_service.so
 system/lib/vendor.somc.hardware.camera.cacao@1.0.so
 system/lib/vendor.somc.hardware.camera.cacao@2.0.so
 system/lib/vendor.somc.hardware.camera.cacao@3.0.so
 system/lib/vendor.somc.hardware.camera.cacao@3.1.so
 system/lib/vendor.somc.hardware.camera.device@1.0.so
 system/lib/vendor.somc.hardware.camera.provider@1.0.so
-system/lib64/libcacao_pal.so
 vendor/camera/SOI20BS2/color_ctrl.dat
 vendor/camera/SOI20BS2/dataflow.dat
 vendor/camera/SOI20BS2/exposure_ctrl.dat
@@ -221,9 +221,7 @@ vendor/camera/SOI20BS2_BU64747GWZ_XCF.dat
 vendor/camera/SOI20BS2_BU64747GWZ_XFW.dat
 vendor/etc/flashled_calc_parameters.cfg
 vendor/etc/init/vendor.somc.hardware.camera.provider@1.0-service.rc|e200ef3fae65791e2c4e628c70c0e3ecb89bf88c
-vendor/lib/libdualcameraddm.so
 vendor/lib/libmmcamera_tintless_algo.so
-vendor/lib/libscveFaceLandmarks.so
 vendor/lib/libsomc_alfort.so
 vendor/lib/libsomc_alfortlp.so
 vendor/lib/libsomc_alfortlpserv.so
@@ -264,30 +262,6 @@ vendor/lib/libsomc_yummyrsc.so
 vendor/lib/libsony_fooddetect.so
 vendor/lib/libsony_naruto.so
 
-# CAMERA_APP
--system/app/CameraAddonPermission-release/CameraAddonPermission-release.apk
--system/app/CameraCommonPermission-release/CameraCommonPermission-release.apk
--system/app/CameraExtensionPermission-release/CameraExtensionPermission-release.apk
--system/app/ImageProcessorPermission-release/ImageProcessorPermission-release.apk
-system/etc/default-permissions/com.sonyericsson.android.camera.xml|705f1fb1ab3734b84f8df0a8d7b37ef71f0c0e43
-system/etc/permissions/com.sonymobile.album.internal.xml
-system/etc/permissions/com.sonymobile.album.xml
-system/etc/permissions/com.sonymobile.camera.addon.api.xml|fa61a0d5420bfd009a6583f59f7ebc89f5612c78
-system/etc/permissions/com.sonymobile.imageprocessor.bypasscamera.api.xml|9e4fa7a11d5b9ce708194e6deeee5efac24cbe6b
-system/etc/permissions/privapp-permissions-com.sonyericsson.android.addoncamera.artfilter.xml|7c2870e7221688e6ad36c702517ce6f6ae3fba1c
-system/etc/permissions/privapp-permissions-com.sonyericsson.android.camera.xml|dc6504a821c4008a5c8f3978b1e7eb910fc8997f
-system/etc/permissions/privapp-permissions-com.sonyericsson.android.camera3d.xml|73b428374841bf76b609af2fca238da70b7281c8
-system/etc/permissions/privapp-permissions-com.sonymobile.android.addoncamera.soundphoto.xml|b3f66d2bf6a76986588597e25430fdc45624a11c
-system/etc/permissions/privapp-permissions-com.sonymobile.moviecreator.xml|c81ec4f7e80c1780aa11ff12777350719a03d7c0
-system/framework/com.sonymobile.camera.addon_impl.jar:system/framework/com.sonymobile.camera.addon.api.jar
-system/framework/com.sonymobile.imageprocessor.bypasscamera_impl.jar:system/framework/com.sonymobile.imageprocessor.bypasscamera.api.jar
--system/priv-app/ArtFilterCamera-xhdpi-release/ArtFilterCamera-xhdpi-release.apk
--system/priv-app/CameraCommon/CameraCommon.apk
--system/priv-app/CameraPanorama-release/CameraPanorama-release.apk
--system/priv-app/SemcCameraUI-xxhdpi-release/SemcCameraUI-xxhdpi-release.apk
--system/priv-app/SomcMovieCreator-release/SomcMovieCreator-release.apk
--system/priv-app/SoundPhotoCamera-xhdpi-release/SoundPhotoCamera-xhdpi-release.apk
-
 # CAMERA_FIRMWARE
 vendor/firmware/cpp_firmware_v1_10_0.fw
 vendor/firmware/cpp_firmware_v1_12_0.fw
@@ -305,19 +279,6 @@ vendor/firmware/cpp_firmware_v1_8_0.fw
 system/lib/libjni_imageutil.so
 system/lib/libjni_snapcammosaic.so
 system/lib/libjni_snapcamtinyplanet.so
-vendor/lib/libchromaflash.so
-vendor/lib/liboptizoom.so
-vendor/lib/libscveBlobDescriptor.so
-vendor/lib/libscveBlobDescriptor_stub.so
-vendor/lib/libscveCommon.so
-vendor/lib/libscveCommon_stub.so
-vendor/lib/libscveFaceRecognition.so
-vendor/lib/libscveObjectSegmentation.so
-vendor/lib/libscveObjectTracker.so
-vendor/lib/libscveObjectTracker_stub.so
-vendor/lib/libscvePanorama.so
-vendor/lib/libscvePanorama_lite.so
-vendor/lib/libubifocus.so
 
 # CHARGER
 vendor/bin/hvdcp_opti

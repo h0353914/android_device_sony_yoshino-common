@@ -10,7 +10,6 @@ binder_call(hal_camera_somc, cacaoserver)
 unix_socket_connect(hal_camera_somc, tad, tad)
 
 allow hal_camera_somc hal_graphics_mapper_hwservice:hwservice_manager find;
-allow hal_camera_somc fwk_sensor_service:service_manager find;
 
 # /dev/socket/cammw_tintless
 allow hal_camera_somc camera_somc_socket:sock_file rw_file_perms;
@@ -50,9 +49,3 @@ allow hal_camera_somc lensctrl_device:chr_file rw_file_perms;
 
 # Don't log attempts to look for idd
 dontaudit hal_camera_somc default_android_hwservice:hwservice_manager find;
-
-# Allow Sony camera HAL to read system default properties
-get_prop(hal_camera_somc, default_prop)
-
-# Allow reads of exported default props
-get_prop(hal_camera_somc, exported_default_prop)
