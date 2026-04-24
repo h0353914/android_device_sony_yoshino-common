@@ -1,0 +1,2 @@
+# Allow cameraserver to read SOMC camera properties
+get_prop(cameraserver, somc_camera_prop)
