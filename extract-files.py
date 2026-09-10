@@ -23,6 +23,7 @@ namespace_imports = [
     'hardware/qcom-caf/msm8998',
     'hardware/qcom-caf/wlan',
     'vendor/qcom/opensource/dataservices',
+    "vendor/sony/camera",
 ]
 
 
@@ -88,9 +89,6 @@ blob_fixups: blob_fixups_user_type = {
     'vendor/lib/libznr.so': blob_fixup()
         .add_needed('liblog.so'),
     ('vendor/lib/vendor.semc.hardware.light@1.0.so', 'vendor/lib/vendor.semc.system.idd@1.0.so',
-     'vendor/lib/vendor.somc.hardware.camera.cacao@1.0.so', 'vendor/lib/vendor.somc.hardware.camera.cacao@2.0.so',
-     'vendor/lib/vendor.somc.hardware.camera.cacao@3.0.so', 'vendor/lib/vendor.somc.hardware.camera.cacao@3.1.so',
-     'vendor/lib/vendor.somc.hardware.camera.device@1.0.so', 'vendor/lib/vendor.somc.hardware.camera.provider@1.0.so',
      'vendor/lib/vendor.somc.hardware.security.secd@1.0.so', 'vendor/lib64/com.fingerprints.extension@1.0.so',
      'vendor/lib64/vendor.semc.hardware.light@1.0.so', 'vendor/lib64/vendor.semc.system.idd@1.0.so',
      'vendor/lib64/vendor.somc.hardware.miscta@1.0.so', 'vendor/lib64/vendor.somc.hardware.security.secd@1.0.so'): blob_fixup()
