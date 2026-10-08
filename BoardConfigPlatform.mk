@@ -109,6 +109,10 @@ TARGET_USERIMAGES_USE_F2FS := true
 TW_EXCLUDE_DEFAULT_USB_INIT := true
 TARGET_RECOVERY_DEVICE_MODULES += init.recovery.usb.rc
 
+# recovery/root of the platform and of the device (the device one wins on conflicts);
+# once this is set, the device's own recovery/root is no longer picked up by itself
+TARGET_RECOVERY_DEVICE_DIRS += $(PLATFORM_PATH) $(TARGET_DEVICE_DIR)
+
 ## LOGCAT SUPPORT
 TWRP_INCLUDE_LOGCAT := true
 TARGET_USES_LOGD := true
