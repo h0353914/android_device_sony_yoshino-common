@@ -7,6 +7,9 @@ export OF_MAINTAINER="h0353914"
 # Sony has no "recovery" partition: recovery lives in FOTAKernel
 export FOX_RECOVERY_INSTALL_PARTITION="/dev/block/bootdevice/by-name/FOTAKernel"
 
+# Keymaster 3.0 fallback for vendors without a manifest Fox can read (Oreo)
+export OF_DEFAULT_KEYMASTER_VERSION="3.0"
+
 # Not a Xiaomi device
 export OF_DISABLE_MIUI_SPECIFIC_FEATURES=1
 export OF_NO_MIUI_PATCH_WARNING=1
